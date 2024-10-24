@@ -70,6 +70,19 @@ void microbit::register_for_notify(notify_callback notifyCallback)
   }
 }
 
+void microbit::get_accelerometer(int16_t* accel)
+{
+  if (client != nullptr) {
+    std::string s = this->client->getValue(accelerometer, accelerometer_data);
+    if (s.length() == 6) {
+      for (size_t i = 0, j = 0;  i < s.length(); i+=2, j++) {
+        accel[j] = static_cast<int16_t>((static_cast<uint8_t>(s[i+1]) << 8) | static_cast<uint8_t>(s[i]));
+      }
+    }
+  }
+  return;
+}
+
 uint8_t microbit::get_a_button()
 {
   if (client != nullptr) {
@@ -90,17 +103,4 @@ uint8_t microbit::get_b_button()
     }
   }
   return 0;
-}
-
-void microbit::get_accelerometer(int16_t* accel)
-{
-  if (client != nullptr) {
-    std::string s = this->client->getValue(accelerometer, accelerometer_data);
-    if (s.length() == 6) {
-      for (size_t i = 0, j = 0;  i < s.length(); i+=2, j++) {
-        accel[j] = static_cast<int16_t>((static_cast<uint8_t>(s[i+1]) << 8) | static_cast<uint8_t>(s[i]));
-      }
-    }
-  }
-  return;
 }

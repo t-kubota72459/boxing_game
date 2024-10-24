@@ -2,6 +2,12 @@
 #include "BLEClient.h"
 #define microbit_h
 
+struct sensor_data
+{
+    uint8_t buttons;
+    int16_t accel[3];
+};
+
 struct microbit
 {
     static bool init_done;

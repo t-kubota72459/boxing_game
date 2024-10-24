@@ -7,10 +7,11 @@ microbit mymb = microbit();
 QueueHandle_t queue;
 
 void task1(void* pvParameters) {
-    uint16_t b;
+    sensor_data s;
     while (1) {
-      b = (uint16_t)(((uint8_t)mymb.get_a_button()) << 8 | ((uint8_t)mymb.get_b_button()));
-      xQueueSend(queue, &b, 1);
+      s.buttons = (uint16_t)(((uint8_t)mymb.get_a_button()) << 4 | ((uint8_t)mymb.get_b_button()));
+      mymb.get_accelerometer(s.accel);
+      xQueueSend(queue, &s, 1);
       delay(20);
     }
 }
@@ -23,16 +24,21 @@ void setup()
   microbit::init();
   microbit::connect(&mymb, MY_PEER);
 
-  queue = xQueueCreate(10, 2);
+  queue = xQueueCreate(10, sizeof(sensor_data));
   xTaskCreatePinnedToCore(task1, "task1", 4096, NULL, 1, NULL, 1);
 }
 
 void loop()
 {
-  uint16_t b;
+  sensor_data s;
   AtomS3.update();
-  xQueueReceive(queue, &b, portMAX_DELAY);
-  Serial.println("Hello world!");
-  Serial.println(b);
+  xQueueReceive(queue, &s, portMAX_DELAY);
+  Serial.print(s.buttons);
+  Serial.print(",");
+  Serial.print(s.accel[0]);
+  Serial.print(",");
+  Serial.print(s.accel[1]);
+  Serial.print(",");
+  Serial.println(s.accel[2]);
   delay(10);
 }
