@@ -3,7 +3,8 @@
 #include "M5AtomicMotion.h"
 #include "Property.h"
 
-#define MY_PEER "C2:FD:63:8F:CC:42"
+//#define MY_PEER "C2:FD:63:8F:CC:42"
+#define MY_PEER "D9:1F:4C:D4:A8:35"
 
 volatile bool interruptFlag = false;
 
@@ -27,16 +28,30 @@ void task1(void* pvParameters) {
     while (1) {
       s.buttons = (uint16_t)(((uint8_t)mymb.get_a_button()) << 4 | ((uint8_t)mymb.get_b_button()));
       mymb.get_accelerometer(s.accel);
-      //xQueueSend(queue, &s, 1);
+      xQueueSend(queue, &s, 1);
       delay(20);
     }
+}
+
+uint8_t mygetMotorSpeed(uint8_t ch)
+{
+  uint8_t reg = ch | 0x20;
+  return M5.In_I2C.readRegister8(0x38, reg, 400000);
+}
+
+uint8_t mysetMotorSpeed(uint8_t ch, int8_t speed)
+{
+  uint8_t reg = ch + 32;
+  Serial.printf("write result=%d\r\n",  M5.In_I2C.writeRegister8(0x38, reg, (uint8_t)speed, 400000));
+  return 0;
 }
 
 void setup()
 {
   auto cfg = M5.config();
-  
+
   AtomS3.begin(cfg);
+  //Wire.begin(M5.Ex_I2C.getSDA(), M5.Ex_I2C.getSCL());
 
   pinMode(1, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(1), handleInterrupt, FALLING);
@@ -46,20 +61,29 @@ void setup()
   AtomS3.Display.setTextSize(2);
   AtomS3.Display.drawString("Atomic Init", AtomS3.Display.width() / 2, AtomS3.Display.height() / 2);
 
-  AtomS3.Ex_I2C.
+  // AtomS3.Ex_I2C.
   // for AtomS3:
   //    sda=38
   //    scl=39
   //
   while (!AtomicMotion.begin(&Wire, M5_ATOMIC_MOTION_I2C_ADDR, 38, 39, 100000)) {
-  //  AtomS3.Display.clear();
-  //  AtomS3.Display.drawString("Init Fail", AtomS3.Display.width() / 2, AtomS3.Display.height() / 2);
-  //}
+    AtomS3.Display.clear();
+    AtomS3.Display.drawString("Init Fail", AtomS3.Display.width() / 2, AtomS3.Display.height() / 2);
+  }
   AtomS3.Display.clear();
   AtomS3.Display.drawString("OK", AtomS3.Display.width() / 2, AtomS3.Display.height() / 2);
 
   Serial.begin(115200);
+  Serial.printf("M5.getBoard()=%d\r\n", M5.getBoard());
+  Serial.printf("M5.Imu.isEnabled()=%d\r\n", M5.Imu.isEnabled());
+  Serial.printf("M5.In_I2C.isEnabled()=%d\r\n", M5.In_I2C.isEnabled());
+  Serial.printf("M5.Ex_I2C.isEnabled()=%d\r\n", M5.Ex_I2C.isEnabled());
+  Serial.printf("cfg.internal_imu=%d\r\n", cfg.internal_imu);
+  Serial.printf("cfg.external_imu=%d\r\n", cfg.external_imu);
   Serial.printf("AtomS3.In_I2C.getSCL()/getSDA() = %d/%d\r\n", AtomS3.In_I2C.getSCL(), AtomS3.In_I2C.getSDA());
+  for (int i = 0; i < 10; i++) {
+    Serial.println(mygetMotorSpeed(0));
+  }
   microbit::init();
   microbit::connect(&mymb, MY_PEER);
 
@@ -93,8 +117,8 @@ void loop()
   if (interruptFlag) {
     Serial.println("HIT!!::stop");
     drawString(RED, "HIT!!");
-    //AtomicMotion.setMotorSpeed(0, 0);
-    //AtomicMotion.setMotorSpeed(1, 0);
+    AtomicMotion.setMotorSpeed(0, 0);
+    AtomicMotion.setMotorSpeed(1, 0);
     delay(1000);  // stop for 1 seconds.
     Serial.println("HIT!!::release");
     xQueueReset(queue);
@@ -102,7 +126,7 @@ void loop()
     interruptFlag = false;
   }
 
-  // xQueueReceive(queue, &s, portMAX_DELAY);
+  xQueueReceive(queue, &s, portMAX_DELAY);
 
   Serial.printf("mb: %d %d %d %d\r\n", s.buttons, s.accel[0], s.accel[1], s.accel[2]);
   Serial.printf("im: %0.2f %0.2f %0.2f\r\n", ix, iy, iz);
@@ -118,20 +142,22 @@ void loop()
   Serial.printf("x=%d y=%d y0=%d y1=%d\r\n", x, y, y0, y1);  
 
   if (0xF0 & s.buttons) {
-    //AtomicMotion.setMotorSpeed(0, 80);
-    //AtomicMotion.setMotorSpeed(1, -80);
+    mysetMotorSpeed(0, 80);
+    mysetMotorSpeed(1, -80);
   } else if (0x0F & s.buttons) {
-    //AtomicMotion.setMotorSpeed(0, -80);
-    //AtomicMotion.setMotorSpeed(1, 80);
+    mysetMotorSpeed(0, -80);
+    mysetMotorSpeed(1, 80);
   } else if (x == 0) {
-    //AtomicMotion.setMotorSpeed(0, y0);
-    //AtomicMotion.setMotorSpeed(1, y1);
+    mysetMotorSpeed(0, y0);
+    mysetMotorSpeed(1, y1);
   } else if ( x > 0) {
-    //AtomicMotion.setMotorSpeed(0, 100);
-    //AtomicMotion.setMotorSpeed(1, 0);
+    mysetMotorSpeed(0, 100);
+    mysetMotorSpeed(1, 0);
   } else if ( x < 0) {
-    //AtomicMotion.setMotorSpeed(0, 0);
-    //AtomicMotion.setMotorSpeed(1, 100);
+    mysetMotorSpeed(0, 0);
+    mysetMotorSpeed(1, 100);
   }
+  Serial.println(mygetMotorSpeed(0));
+  Serial.println(mygetMotorSpeed(1));
   delay(10);
 }
