@@ -16,3 +16,9 @@ uint8_t Motor::setMotorSpeed(uint8_t ch, int8_t speed)
     M5.In_I2C.writeRegister8(I2C_ATOMIC_MOTION_ADDR, reg, (uint8_t)speed, I2C_ATOMIC_MOTION_FREQ);
     return 0;
 }
+
+void Motor::initMotors()
+{
+    Motor::setMotorSpeed(0, 0);
+    Motor::setMotorSpeed(1, 0);
+}

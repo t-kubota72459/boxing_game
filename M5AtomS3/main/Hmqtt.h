@@ -17,6 +17,7 @@ struct Hmqtt
     static void setServer();
     static void update();
     static void setCallback(MQTT_CALLBACK_SIGNATURE);
+    statid void callback(char* topic, byte* payload, unsigned int length);
 };
 
 #endif

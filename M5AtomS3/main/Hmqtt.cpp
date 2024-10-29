@@ -1,8 +1,8 @@
 #include "M5AtomS3.h"
-#include "Hmqtt.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <string.h>
+#include "Hmqtt.h"
 
 const char* Hmqtt::ssid        = "Buffalo-G-2598";
 const char* Hmqtt::password    = "x3fgskfwxeenf";
@@ -18,16 +18,16 @@ void Hmqtt::setupWifi()
     WiFi.mode(WIFI_STA);                        // Set the mode to WiFi station mode.
     WiFi.begin(Hmqtt::ssid, Hmqtt::password);   // Start Wifi connection.
 
-    while (WiFi.status() != WL_CONNECTED) {
+    while ( WiFi.status() != WL_CONNECTED ) {
         delay(500);
         Serial.print(".");
     }
-    Serial.printf("\nSuccess\n");
+    Serial.printf("\r\nSuccess\r\n");
 }
 
 void Hmqtt::reConnect()
 {
-    while (! Hmqtt::client.connected()) {
+    while (! Hmqtt::client.connected() ) {
         Serial.print("Attempting MQTT connection...");      // Create a random client ID.
 
         String clientId = "M5Stack-";
@@ -38,27 +38,29 @@ void Hmqtt::reConnect()
             // Hmqtt::client.subscribe(topic);
         } else {
             Serial.print("failed, rc=");
-            Serial.print(Hmqtt::client.state());
+            Serial.print( Hmqtt::client.state() );
             Serial.println("try again in 5 seconds");
             delay(5000);
         }
     }
 }
 
-void Hmqtt::setServer()
+void Hmqtt::callback(char* topic, byte* payload, unsigned int length)
 {
-  Hmqtt::client.setServer(Hmqtt::mqtt_server, 1883);
+    Serila.printf("message detected!\r\n");
 }
 
-void Hmqtt::setCallback(MQTT_CALLBACK_SIGNATURE)
+void Hmqtt::init()
 {
-  Hmqtt::client.setCallback(callback);
+  Hmqtt::setupWifi();
+  Hmqtt::client.setServer(Hmqtt::mqtt_server, 1883);
+  Hmqtt:client.setCallback(Hmqtt:callback);
 }
 
 void Hmqtt::update()
 {
-  if (! Hmqtt::client.connected()) {
-    Hmqtt::reConnect();
-  }
-  Hmqtt::client.loop();
+    if (! Hmqtt::client.connected()) {
+        Hmqtt::reConnect();
+    }
+    Hmqtt::client.loop();
 }
