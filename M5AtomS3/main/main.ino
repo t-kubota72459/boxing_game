@@ -2,6 +2,8 @@
 #include "microbit.h"
 #include "Motor.h"
 #include "Property.h"
+#include "Hmqtt.h"
+#include "HImu.h"
 
 #define MY_PEER "C2:FD:63:8F:CC:42"
 // #define MY_PEER "D9:1F:4C:D4:A8:35"
@@ -69,6 +71,11 @@ void setup()
 
   prop.STATE = 0;
   prop.DAMAGE = 0;
+  Hmqtt::setupWifi();
+  Hmqtt::setServer();
+  Hmqtt::setCallback(NULL);
+
+  HImu::resetPosture();
 }
 
 void drawString(int color, char *s)
@@ -82,15 +89,10 @@ void loop()
 {
   static float ix = 0.0, iy = 0.0, iz = 0.0;
   sensor_data s;
-  AtomS3.update();
-  auto updated = AtomS3.Imu.update();
-  if (updated) {
-    auto imu = AtomS3.Imu.getImuData();
-    ix = 0.05 * imu.accel.x + (1 - 0.05) * ix;
-    iy = 0.05 * imu.accel.y + (1 - 0.05) * iy;
-    iz = 0.05 * imu.accel.z + (1 - 0.05) * iz;
-  }
 
+  Hmqtt::update();
+  AtomS3.update();
+  Serial.printf("getPosture()=%d\r\n", HImu::getPosture());
   if (interruptFlag) {
     Serial.println("HIT!!::stop");
     drawString(RED, "HIT!!");
