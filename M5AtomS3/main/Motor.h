@@ -1,5 +1,5 @@
-#ifndef Motor_h
-#define Motor_h
+#ifndef _MOTOR_H_
+#define _MOTOR_H_
 
 struct Motor
 {

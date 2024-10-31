@@ -1,6 +1,7 @@
-#ifndef microbit_h
+#ifndef _MICROBIT_H_
+#define _MICROBIT_H_
+
 #include "BLEClient.h"
-#define microbit_h
 
 struct sensor_data
 {

@@ -1,5 +1,5 @@
-#ifndef _Hmqtt_H_
-#define _Hmqtt_H_
+#ifndef _HMQTT_H_
+#define _HMQTT_H_
 #include <WiFi.h>
 #include <PubSubClient.h>
 
@@ -17,7 +17,8 @@ struct Hmqtt
     static void setServer();
     static void update();
     static void setCallback(MQTT_CALLBACK_SIGNATURE);
-    statid void callback(char* topic, byte* payload, unsigned int length);
+    static void callback(char* topic, byte* payload, unsigned int length);
+    static void init();
 };
 
 #endif
