@@ -9,13 +9,13 @@ import time
 
 message_queue = queue.Queue()
 pygame.mixer.init()
-pygame.mixer.music.load("ロッキーのテーマ曲.mp3")
+pygame.mixer.music.load("snd/ロッキーのテーマ曲.mp3")
 pygame.mixer.music.set_volume(0.1)
 pygame.mixer.music.play(-1)
 
 gong_sound = {
-    "START" : pygame.mixer.Sound("始め_ゴング.mp3"),
-    "END" : pygame.mixer.Sound("終了_ゴング.mp3"),
+    "START" : pygame.mixer.Sound("snd/始め_ゴング.mp3"),
+    "END" : pygame.mixer.Sound("snd/終了_ゴング.mp3"),
 }
 
 # 各プレイヤーのパンチ数を管理する辞書
