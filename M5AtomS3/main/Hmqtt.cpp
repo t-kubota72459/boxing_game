@@ -49,7 +49,6 @@ void Hmqtt::reConnect()
 
 void Hmqtt::callback(char* topic, byte* payload, unsigned int length)
 {
-    Serial.printf("**********************************************************************************************callback called.\r\n");
     if ((1 <= payload[0] && payload[0] <= 2) 
       && (1 <= payload[1] && payload[1] <= 7)) {
         if (prop.IAM == static_cast<Player>(payload[0])) {

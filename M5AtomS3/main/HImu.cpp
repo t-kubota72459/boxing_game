@@ -11,9 +11,9 @@ Posture HImu::posture;
 
 Posture HImu::getPosture()
 {
-  if (abs(HImu::normalized.x) > 0.75) {         // 左右どちらかに寝ている
+  if (abs(HImu::normalized.x) > 0.70) {         // 左右どちらかに寝ている
     HImu::posture = Posture::FALLEN;
-  } else if (abs(HImu::normalized.z) > 0.75) {  // 伏せている
+  } else if (abs(HImu::normalized.z) > 0.70) {  // 伏せている
     HImu::posture = Posture::FALLEN;
   } else if (HImu::normalized.y > -0.5) {       // 逆さまになっている？？？
     HImu::posture = Posture::FALLEN;;
