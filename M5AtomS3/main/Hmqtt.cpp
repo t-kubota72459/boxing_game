@@ -7,7 +7,7 @@
 
 const char* Hmqtt::ssid        = "Buffalo-G-2598";
 const char* Hmqtt::password    = "x3fgskfwxeenf";
-const char* Hmqtt::mqtt_server = "10.0.0.3";
+const char* Hmqtt::mqtt_server = "10.0.0.4";
 
 WiFiClient Hmqtt::espClient;
 PubSubClient Hmqtt::client(Hmqtt::espClient);

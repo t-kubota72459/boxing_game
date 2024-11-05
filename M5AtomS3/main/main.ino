@@ -5,8 +5,15 @@
 #include "Hmqtt.h"
 #include "HImu.h"
 
-#define MY_MICROBIT "C2:FD:63:8F:CC:42"
-// #define MY_PEER "D9:1F:4C:D4:A8:35"
+#define BOXIER1             "F6:CC:2F:23:3B:6C"
+#define BOXIER2             "D5:D7:F2:2E:47:FB"
+#define BOXIER3             "D8:10:15:D8:17:95"
+
+// つなげる Micro:bit の MAC
+#define MY_MICROBIT         BOXIER3
+
+// プレイヤー
+#define SELF                Player::PLAYER2
 
 const char *Status_string_table[] {
     "none",
@@ -19,14 +26,25 @@ const char *Status_string_table[] {
     "RDY"
 };
 
+volatile bool interruptFlag1 = false;
 volatile bool interruptFlag = false;
 
 Property prop;
 static uint8_t msg[16];
 
+const unsigned long debounceTime = 30;              // Set debounce time in milliseconds
+volatile unsigned long lastInterruptTime = 0;
 void IRAM_ATTR handleInterrupt()
 {
-    interruptFlag = true;
+    unsigned long currentTime = millis();
+    if ((currentTime - lastInterruptTime) > debounceTime) {
+        if (! interruptFlag1) {
+            interruptFlag1 = true;
+        } else {
+            interruptFlag = true;
+        }
+        lastInterruptTime = currentTime;
+    }        
 }
 
 microbit mymb = microbit();
@@ -51,7 +69,7 @@ void setup()
     AtomS3.begin(cfg);
     Serial.begin(115200);
 
-    prop.IAM = Player::PLAYER1;
+    prop.IAM = SELF;
     prop.STATUS = Status::BUSY;
     
     AtomS3.Display.setRotation(2);
@@ -88,9 +106,11 @@ void setup()
     delay(10);
 
     Serial.printf("Microbit: init %s.\r\n", MY_MICROBIT);
+    drawString(RED, "MB");
     microbit::init();
     microbit::connect(&mymb, MY_MICROBIT);
     Serial.printf("Microbit: done.");
+    drawString(RED, "MB.");
     delay(10);
 
     Serial.printf("Acquistion thread: init.\r\n");
@@ -100,10 +120,12 @@ void setup()
     delay(10);
 
     Serial.printf("MQTT: init.\r\n");
+    drawString(RED, "WF");
     Hmqtt::init();
     delay(10);
     Hmqtt::update();
     delay(10);
+    drawString(RED, "WF.");
     Serial.printf("MQTT: done.\r\n");
     
     prop.STATUS = Status::IDLE;
@@ -135,11 +157,12 @@ void drawString(int color, const char *s)
 static Status prev_stat = Status::BUSY;
 static bool fallen_send_flag = false;
 
+
 void loop()
 {
     sensor_data s;
     
-    int x, x0, x1, y, y0, y1;
+    int x, x0, x1, y, y0, y1, i;
 
     AtomS3.update();
     Hmqtt::update();
@@ -151,15 +174,22 @@ void loop()
     case Status::FIGHT:
         // 鼻ヒット！
         if ( interruptFlag ) {
-            drawString(RED, "!!");
+            char bikkuri[16];
             prop.DAMAGE++;
             prop.dump2(msg);
+            for (i = 0; i < prop.DAMAGE; i++) {
+                bikkuri[i] = '!';
+            }
+            bikkuri[i] = '\0';
+            drawString(RED, bikkuri);
+                
             Hmqtt::client.publish("HTC_BOXING/STATUS", msg, (unsigned int)4, false);
             Motor::initMotors();
             delay(1000);  // stop for 1 seconds.
             xQueueReset(queue);
-            drawString(GREEN, Status_string_table[static_cast<int8_t>(prop.STATUS)]);
+            interruptFlag1 = false;
             interruptFlag = false;
+            drawString(GREEN, Status_string_table[static_cast<int8_t>(prop.STATUS)]);
         }
         // 倒れた！
         if (! fallen_send_flag && ((prop.POSTURE = HImu::getPosture()) == Posture::FALLEN )) {
@@ -172,7 +202,7 @@ void loop()
 
         // Serial.printf("microbit: buttons=%d X=%d Y=%d Z=%d\r\n", s.buttons, s.accel[0], s.accel[1], s.accel[2]);
 
-        y = map(s.accel[1], -1100, +1100, -100, +101);  // range from -110 to +110
+        y = map(s.accel[1], -1100, +1100, -90, +91);  // range from -110 to +110
         x = map(s.accel[0], -1100, +1100, -1, +2);      // range from -1 to +1
 
         x0 = 1 - max(0, x);
@@ -183,20 +213,20 @@ void loop()
         // Serial.printf("x=%d y=%d y0=%d y1=%d\r\n", x, y, y0, y1);  
 
         if (0xF0 & s.buttons) {               // turn right
-            Motor::setMotorSpeed(0, 80);
-            Motor::setMotorSpeed(1, -(-80));
+            Motor::setMotorSpeed(0, 70);
+            Motor::setMotorSpeed(1, -(-70));
         } else if (0x0F & s.buttons) {        // turn left
-            Motor::setMotorSpeed(0, -80);
-            Motor::setMotorSpeed(1, -80);
+            Motor::setMotorSpeed(0, -70);
+            Motor::setMotorSpeed(1, -70);
         } else if (x == 0) {                  // forward or back 
             Motor::setMotorSpeed(0, y0);
             Motor::setMotorSpeed(1, -y1);
         } else if ( x > 0) {                  // right punch only
-            Motor::setMotorSpeed(0, 100);
+            Motor::setMotorSpeed(0, 80);
             Motor::setMotorSpeed(1, 0);
         } else if ( x < 0) {                  // left punch only
             Motor::setMotorSpeed(0, 0);
-            Motor::setMotorSpeed(1, -100);
+            Motor::setMotorSpeed(1, -80);
         }
         // Serial.printf("motor: ch0=%d, ch1=%d\r\n", Motor::getMotorSpeed(0), Motor::getMotorSpeed(1));
         break;
@@ -205,12 +235,12 @@ void loop()
     case Status::LOSE:
     case Status::DRAW:
         Motor::setMotorSpeed(0, 0);
-        Motor::setMotorSpeed(0, 0);
+        Motor::setMotorSpeed(1, 0);
         break;
 
     case Status::READY:
         Motor::setMotorSpeed(0, 0);
-        Motor::setMotorSpeed(0, 0);
+        Motor::setMotorSpeed(1, 0);
 
         prop.STATUS = Status::IDLE;        
         prop.POSTURE = HImu::getPosture();
@@ -223,13 +253,13 @@ void loop()
 
     case Status::IDLE:
         Motor::setMotorSpeed(0, 0);
-        Motor::setMotorSpeed(0, 0);
+        Motor::setMotorSpeed(1, 0);
         break;
     
     default:
         Serial.println("Error!!!\r\n");
         Motor::setMotorSpeed(0, 0);
-        Motor::setMotorSpeed(0, 0);
+        Motor::setMotorSpeed(1, 0);
         // should not come here
     }
 

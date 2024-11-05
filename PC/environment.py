@@ -16,13 +16,14 @@ pygame.mixer.music.play(-1)
 gong_sound = {
     "START" : pygame.mixer.Sound("snd/始め_ゴング.mp3"),
     "END" : pygame.mixer.Sound("snd/終了_ゴング.mp3"),
+    "HIT" : pygame.mixer.Sound("snd/heavy_punch1.mp3")
 }
 
 # 各プレイヤーのパンチ数を管理する辞書
 punch_counts = {Player.PLAYER1: 0, Player.PLAYER2: 0}
 
 # ラウンドに関する変数
-round_time = 30  # ラウンド時間 (秒)
+round_time = 60  # ラウンド時間 (秒)
 current_round = 1
 max_rounds = 3
 start_time = 0
@@ -168,6 +169,7 @@ def gui_thread(client):
                 window['-PLAYER2-HIT-'].update(f"　{punch_counts[Player.PLAYER1]}")   ## くらった数なので、表示が逆になる！
 
                 if IN_FIGHT:
+                    gong_sound["HIT"].play()
                     winner = determin_loser(client, msg)
                 else:
                     if not ready(msg):
@@ -216,6 +218,7 @@ def gui_thread(client):
         # 勝者が確定した
         #
         if winner:
+            gong_sound["END"].play()
             sg.popup_ok(
                 f"勝者: プレイヤー{winner.value}!", 
                 title="試合終了", 
@@ -225,7 +228,6 @@ def gui_thread(client):
                 location=(None, None),  # 画面中央に表示
                 #size=(10, 1)  # OKボタンを小さく設定
             )
-            gong_sound["END"].play()
             IN_FIGHT = False
             start_time = 0
             winner = None
