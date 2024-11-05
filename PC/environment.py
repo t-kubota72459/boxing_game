@@ -16,8 +16,8 @@ pygame.mixer.music.play(-1)
 gong_sound = {
     "START" : pygame.mixer.Sound("snd/始め_ゴング.mp3"),
     "END" : pygame.mixer.Sound("snd/終了_ゴング.mp3"),
-    "HIT" : pygame.mixer.Sound("snd/heavy_punch1.mp3")
-    "VOICE" : pygame.mixer.Sound("snd/スタジアムの歓声.mp3")
+    "HIT" : pygame.mixer.Sound("snd/heavy_punch1.mp3"),
+    "VOICE" : pygame.mixer.Sound("snd/スタジアムの歓声2.mp3")
 }
 
 # 各プレイヤーのパンチ数を管理する辞書
