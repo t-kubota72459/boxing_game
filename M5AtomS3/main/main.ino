@@ -10,7 +10,7 @@
 #define BOXIER3             "D8:10:15:D8:17:95"
 
 // つなげる Micro:bit の MAC
-#define MY_MICROBIT         BOXIER3
+#define MY_MICROBIT         BOXIER2
 
 // プレイヤー
 #define SELF                Player::PLAYER2
@@ -32,7 +32,7 @@ volatile bool interruptFlag = false;
 Property prop;
 static uint8_t msg[16];
 
-const unsigned long debounceTime = 30;              // Set debounce time in milliseconds
+const unsigned long debounceTime = 50;              // Set debounce time in milliseconds
 volatile unsigned long lastInterruptTime = 0;
 void IRAM_ATTR handleInterrupt()
 {
@@ -202,7 +202,7 @@ void loop()
 
         // Serial.printf("microbit: buttons=%d X=%d Y=%d Z=%d\r\n", s.buttons, s.accel[0], s.accel[1], s.accel[2]);
 
-        y = map(s.accel[1], -1100, +1100, -90, +91);  // range from -110 to +110
+        y = map(s.accel[1], -1100, +1100, -90, +91);  // range from -90 to +91
         x = map(s.accel[0], -1100, +1100, -1, +2);      // range from -1 to +1
 
         x0 = 1 - max(0, x);
@@ -213,20 +213,20 @@ void loop()
         // Serial.printf("x=%d y=%d y0=%d y1=%d\r\n", x, y, y0, y1);  
 
         if (0xF0 & s.buttons) {               // turn right
-            Motor::setMotorSpeed(0, 70);
-            Motor::setMotorSpeed(1, -(-70));
+            Motor::setMotorSpeed(0, 90);
+            Motor::setMotorSpeed(1, -(-90));
         } else if (0x0F & s.buttons) {        // turn left
-            Motor::setMotorSpeed(0, -70);
-            Motor::setMotorSpeed(1, -70);
+            Motor::setMotorSpeed(0, -90);
+            Motor::setMotorSpeed(1, -90);
         } else if (x == 0) {                  // forward or back 
             Motor::setMotorSpeed(0, y0);
             Motor::setMotorSpeed(1, -y1);
         } else if ( x > 0) {                  // right punch only
-            Motor::setMotorSpeed(0, 80);
+            Motor::setMotorSpeed(0, 90);
             Motor::setMotorSpeed(1, 0);
         } else if ( x < 0) {                  // left punch only
             Motor::setMotorSpeed(0, 0);
-            Motor::setMotorSpeed(1, -80);
+            Motor::setMotorSpeed(1, -90);
         }
         // Serial.printf("motor: ch0=%d, ch1=%d\r\n", Motor::getMotorSpeed(0), Motor::getMotorSpeed(1));
         break;

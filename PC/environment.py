@@ -17,6 +17,7 @@ gong_sound = {
     "START" : pygame.mixer.Sound("snd/始め_ゴング.mp3"),
     "END" : pygame.mixer.Sound("snd/終了_ゴング.mp3"),
     "HIT" : pygame.mixer.Sound("snd/heavy_punch1.mp3")
+    "VOICE" : pygame.mixer.Sound("snd/スタジアムの歓声.mp3")
 }
 
 # 各プレイヤーのパンチ数を管理する辞書
@@ -170,6 +171,7 @@ def gui_thread(client):
 
                 if IN_FIGHT:
                     gong_sound["HIT"].play()
+                    gong_sound["VOICE"].play()
                     winner = determin_loser(client, msg)
                 else:
                     if not ready(msg):
