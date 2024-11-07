@@ -10,10 +10,10 @@
 #define BOXIER3             "D8:10:15:D8:17:95"
 
 // つなげる Micro:bit の MAC
-#define MY_MICROBIT         BOXIER2
+#define MY_MICROBIT         BOXIER1
 
 // プレイヤー
-#define SELF                Player::PLAYER2
+#define SELF                Player::PLAYER1
 
 const char *Status_string_table[] {
     "none",
@@ -32,7 +32,7 @@ volatile bool interruptFlag = false;
 Property prop;
 static uint8_t msg[16];
 
-const unsigned long debounceTime = 50;              // Set debounce time in milliseconds
+const unsigned long debounceTime = 25;              // Set debounce time in milliseconds
 volatile unsigned long lastInterruptTime = 0;
 void IRAM_ATTR handleInterrupt()
 {

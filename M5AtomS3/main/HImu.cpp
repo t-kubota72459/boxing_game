@@ -11,9 +11,9 @@ Posture HImu::posture;
 
 Posture HImu::getPosture()
 {
-  if (abs(HImu::normalized.x) > 0.70) {         // 左右どちらかに寝ている
+  if (abs(HImu::normalized.x) > 0.95) {         // 左右どちらかに寝ている
     HImu::posture = Posture::FALLEN;
-  } else if (abs(HImu::normalized.z) > 0.70) {  // 伏せている
+  } else if (abs(HImu::normalized.z) > 0.95) {  // 伏せている or 仰向け
     HImu::posture = Posture::FALLEN;
   } else if (HImu::normalized.y > -0.5) {       // 逆さまになっている？？？
     HImu::posture = Posture::FALLEN;;
@@ -30,9 +30,10 @@ void HImu::update()
 
     if (updated) {
       AtomS3.Imu.getAccel(&(accel.x), &(accel.y), &(accel.z));
-      HImu::normalized.x = 0.05 * accel.x + (1 - 0.05) * HImu::normalized.x;
-      HImu::normalized.y = 0.05 * accel.y + (1 - 0.05) * HImu::normalized.y;
-      HImu::normalized.z = 0.05 * accel.z + (1 - 0.05) * HImu::normalized.z;
+      // Serial.printf("ax=%f, ay=%f, az=%f\r\n", accel.x, accel.y, accel.z);
+      HImu::normalized.x = 0.3 * accel.x + (1 - 0.3) * HImu::normalized.x;
+      HImu::normalized.y = 0.3 * accel.y + (1 - 0.3) * HImu::normalized.y;
+      HImu::normalized.z = 0.3 * accel.z + (1 - 0.3) * HImu::normalized.z;
    } 
 }
 
