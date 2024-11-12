@@ -82,6 +82,10 @@ def mqtt_thread(client):
 def change_background_color(color):
     window.TKroot.configure(bg=color)
 
+def clear_message_queue(q):
+    while not q.empty():
+        q.get()
+
 def gui_thread(client):
     global start_time
     global elapsed_time
@@ -95,8 +99,10 @@ def gui_thread(client):
     settings_layout = [
         [sg.Text('音量設定')],
         [sg.Text('BGM音量'), sg.Slider((0, 100), 50, orientation='h', size=(20, 20), key='-BGM_VOLUME-', enable_events=True)],
+        [sg.Text('歓声＆パンチ音'), sg.Slider((0, 100), 50, orientation='h', size=(20, 20), key='-EFFECT_VOLUME-', enable_events=True)],
         [sg.Text('開始ゴング音量'), sg.Slider((0, 100), 50, orientation='h', size=(20, 20), key='-START_GONG_VOLUME-', enable_events=True)],
         [sg.Text('終了ゴング音量'), sg.Slider((0, 100), 50, orientation='h', size=(20, 20), key='-END_GONG_VOLUME-', enable_events=True)],
+
     ]
 
     log_layout = [
@@ -147,6 +153,7 @@ def gui_thread(client):
     window.read(timeout=progress_bar_update_interval)
     window['-PROGRESSBAR-'].update_bar(100)
 
+    clear_message_queue(message_queue)
     #
     # PySimpleGUI のイベントループ
     #
@@ -201,8 +208,8 @@ def gui_thread(client):
                 for player in Player:
                     payload = create_payload(player, Status.DRAW)
                     client.publish("HTC_BOXING/COMMAND", payload)
-                
                 gong_sound["END"].play()
+                gong_sound["VOICE"].play()
                 IN_FIGHT = False
                 start_time = 0
 
@@ -221,6 +228,7 @@ def gui_thread(client):
         #
         if winner:
             gong_sound["END"].play()
+            gong_sound["VOICE"].play()            
             sg.popup_ok(
                 f"勝者: プレイヤー{winner.value}!", 
                 title="試合終了", 
@@ -244,8 +252,7 @@ def gui_thread(client):
                 payload = create_payload(player, Status.READY)
                 client.publish("HTC_BOXING/COMMAND", payload)
             window["🥊 FIGHT"].update(disabled=False)
-
-
+            
         # FIGHTボタンが押された時の処理
         if event == "🥊 FIGHT":
             start_time = time.time()
@@ -265,6 +272,10 @@ def gui_thread(client):
         elif event == '-END_GONG_VOLUME-':
             volume = values['-END_GONG_VOLUME-'] / 100.0
             gong_sound["END"].set_volume(volume)
+        elif event == '-EFFECT_VOLUME-':
+            volume = values['-EFFECT_VOLUME-'] / 100.0
+            gong_sound["HIT"].set_volume(volume)
+            gong_sound["VOICE"].set_volume(volume)
             
     window.close()
 

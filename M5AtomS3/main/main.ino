@@ -10,10 +10,10 @@
 #define BOXIER3             "D8:10:15:D8:17:95"
 
 // つなげる Micro:bit の MAC
-#define MY_MICROBIT         BOXIER1
+#define MY_MICROBIT         BOXIER2
 
 // プレイヤー
-#define SELF                Player::PLAYER1
+#define SELF                Player::PLAYER2
 
 const char *Status_string_table[] {
     "none",
@@ -145,11 +145,12 @@ void setup()
     AtomS3.Display.clear();
     
     drawString(GREEN, Status_string_table[static_cast<int8_t>(prop.STATUS)]);
+    AtomS3.Display.clear();
 }
 
 void drawString(int color, const char *s)
 {
-    AtomS3.Display.clear();
+    // AtomS3.Display.clear();
     AtomS3.Display.setTextColor(color);
     AtomS3.Display.drawString(s, AtomS3.Display.width() / 2, AtomS3.Display.height() / 2);
 }
@@ -157,6 +158,22 @@ void drawString(int color, const char *s)
 static Status prev_stat = Status::BUSY;
 static bool fallen_send_flag = false;
 
+
+int currentSpeed0 = 0;
+int currentSpeed1 = 0;
+int targetSpeed0 = 0;
+int targetSpeed1 = 0;
+int speedIncrement = 30;
+
+void adjustMotorSpeed(int &currentSpeed, int targetSpeed, int motorChannel) {
+    // targetSpeedに向かってcurrentSpeedを調整
+    if (currentSpeed < targetSpeed) {
+        currentSpeed = min(currentSpeed + speedIncrement, targetSpeed);
+    } else if (currentSpeed > targetSpeed) {
+        currentSpeed = max(currentSpeed - speedIncrement, targetSpeed);
+    }
+    Motor::setMotorSpeed(motorChannel, currentSpeed);
+}
 
 void loop()
 {
@@ -185,7 +202,7 @@ void loop()
                 
             Hmqtt::client.publish("HTC_BOXING/STATUS", msg, (unsigned int)4, false);
             Motor::initMotors();
-            delay(1000);  // stop for 1 seconds.
+            delay(800);  // stop for 800 milli seconds.
             xQueueReset(queue);
             interruptFlag1 = false;
             interruptFlag = false;
@@ -202,8 +219,8 @@ void loop()
 
         // Serial.printf("microbit: buttons=%d X=%d Y=%d Z=%d\r\n", s.buttons, s.accel[0], s.accel[1], s.accel[2]);
 
-        y = map(s.accel[1], -1100, +1100, -90, +91);  // range from -90 to +91
-        x = map(s.accel[0], -1100, +1100, -1, +2);      // range from -1 to +1
+        y = map(s.accel[1], -1100, +1100, -95, +96);  // range from -95 to +95 (96 not included)
+        x = map(s.accel[0], -1100, +1100, -1, +2);    // range from -1 to +1 (2 not included)
 
         x0 = 1 - max(0, x);
         x1 = 1 - max(0, -x);
@@ -213,21 +230,23 @@ void loop()
         // Serial.printf("x=%d y=%d y0=%d y1=%d\r\n", x, y, y0, y1);  
 
         if (0xF0 & s.buttons) {               // turn right
-            Motor::setMotorSpeed(0, 90);
-            Motor::setMotorSpeed(1, -(-90));
+            targetSpeed0 = 85;
+            targetSpeed1 = 85;
         } else if (0x0F & s.buttons) {        // turn left
-            Motor::setMotorSpeed(0, -90);
-            Motor::setMotorSpeed(1, -90);
+            targetSpeed0 = -85;
+            targetSpeed1 = -85;
         } else if (x == 0) {                  // forward or back 
-            Motor::setMotorSpeed(0, y0);
-            Motor::setMotorSpeed(1, -y1);
+            targetSpeed0 = y0;
+            targetSpeed1 = -y1;
         } else if ( x > 0) {                  // right punch only
-            Motor::setMotorSpeed(0, 90);
-            Motor::setMotorSpeed(1, 0);
+            targetSpeed0 = 85;
+            targetSpeed1 = 0;
         } else if ( x < 0) {                  // left punch only
-            Motor::setMotorSpeed(0, 0);
-            Motor::setMotorSpeed(1, -90);
+            targetSpeed0 = 0;
+            targetSpeed1 = -85;
         }
+        adjustMotorSpeed(currentSpeed0, targetSpeed0, 0);
+        adjustMotorSpeed(currentSpeed1, targetSpeed1, 1);
         // Serial.printf("motor: ch0=%d, ch1=%d\r\n", Motor::getMotorSpeed(0), Motor::getMotorSpeed(1));
         break;
 
@@ -239,9 +258,12 @@ void loop()
         break;
 
     case Status::READY:
+        currentSpeed0 = 0;
+        currentSpeed1 = 0;
+        targetSpeed0 = 0;
+        targetSpeed1 = 0;
         Motor::setMotorSpeed(0, 0);
         Motor::setMotorSpeed(1, 0);
-
         prop.STATUS = Status::IDLE;        
         prop.POSTURE = HImu::getPosture();
         prop.DAMAGE = 0;
